@@ -23,7 +23,6 @@ from tenacity import (
 
 from lightrag.utils import (
     wrap_embedding_func_with_attrs,
-    locate_json_string_body_from_string,
     safe_unicode_decode,
 )
 
@@ -108,7 +107,7 @@ async def azure_openai_complete_if_cache(
 async def azure_openai_complete(
     prompt, system_prompt=None, history_messages=[], keyword_extraction=False, **kwargs
 ) -> str:
-    keyword_extraction = kwargs.pop("keyword_extraction", None)
+    kwargs.pop("keyword_extraction", None)
     result = await azure_openai_complete_if_cache(
         os.getenv("LLM_MODEL", "gpt-4o-mini"),
         prompt,
@@ -116,12 +115,10 @@ async def azure_openai_complete(
         history_messages=history_messages,
         **kwargs,
     )
-    if keyword_extraction:  # TODO: use JSON API
-        return locate_json_string_body_from_string(result)
     return result
 
 
-@wrap_embedding_func_with_attrs(embedding_dim=1536, max_token_size=8191)
+@wrap_embedding_func_with_attrs(embedding_dim=1536)
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=4, max=10),
